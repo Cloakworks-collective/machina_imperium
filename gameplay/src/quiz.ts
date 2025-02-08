@@ -1,6 +1,7 @@
 // src/quiz.ts
 
 import PromptSync = require("prompt-sync");
+// import * as PromptSync from 'prompt-sync';
 import { issuesData } from "./db/issues";
 
 interface Impact {

@@ -1,5 +1,6 @@
 // play.ts
 import PromptSync = require("prompt-sync");
+// import * as PromptSync from 'prompt-sync';
 import { issuesData } from "./db/issues";
 import { updateNationStats } from "./birth";
 import type { Nation, Ideology, Personality } from './types';

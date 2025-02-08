@@ -6,6 +6,9 @@ coverage
 # Logs
 logs
 
+# dist
+dist
+
 # Environment
 .env
 
