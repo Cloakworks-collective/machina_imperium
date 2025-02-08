@@ -11,44 +11,16 @@ var __assign = (this && this.__assign) || function () {
     return __assign.apply(this, arguments);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ideologies = void 0;
-exports.getRandomIdeology = getRandomIdeology;
-exports.listIdeologies = listIdeologies;
-exports.getIdeologyByUID = getIdeologyByUID;
 exports.validateNationName = validateNationName;
 exports.createNation = createNation;
 exports.updateNationStats = updateNationStats;
+exports.getRandomIdeology = getRandomIdeology;
+exports.listIdeologies = listIdeologies;
+exports.getIdeologyByUID = getIdeologyByUID;
+// birth.ts
 var ideologies_1 = require("./db/ideologies");
-Object.defineProperty(exports, "ideologies", { enumerable: true, get: function () { return ideologies_1.ideologies; } });
 // Default initial GDP value
 var DEFAULT_GDP = 5000;
-/**
- * Gets a random ideology from the available options
- */
-function getRandomIdeology() {
-    return ideologies_1.ideologies[Math.floor(Math.random() * ideologies_1.ideologies.length)];
-}
-/**
- * Lists all available ideologies with their values
- */
-function listIdeologies() {
-    console.log("\nAvailable Ideologies:");
-    for (var _i = 0, ideologies_2 = ideologies_1.ideologies; _i < ideologies_2.length; _i++) {
-        var ideology = ideologies_2[_i];
-        console.log("\n#".concat(ideology.uid, " - ").concat(ideology.name));
-        console.log("  Economic Freedom: ".concat(ideology.economicFreedom));
-        console.log("  Civil Rights: ".concat(ideology.civilRights));
-        console.log("  Political Freedom: ".concat(ideology.politicalFreedom));
-    }
-}
-/**
- * Gets an ideology by its UID
- * @param uid The unique identifier of the ideology
- * @returns The ideology or null if not found
- */
-function getIdeologyByUID(uid) {
-    return ideologies_1.ideologies.find(function (ideology) { return ideology.uid === uid; }) || null;
-}
 /**
  * Validates a nation name
  * @param name The proposed nation name
@@ -76,7 +48,8 @@ function createInitialStats(ideology) {
  * @param ideology Chosen ideology
  * @returns New nation object
  */
-function createNation(name, ideology) {
+function createNation(name, ideology, rulerType, personality) {
+    if (rulerType === void 0) { rulerType = 'human'; }
     if (!validateNationName(name)) {
         console.error("Invalid nation name");
         return null;
@@ -84,6 +57,8 @@ function createNation(name, ideology) {
     return {
         name: name,
         ideology: ideology,
+        rulerType: rulerType,
+        personality: personality,
         stats: createInitialStats(ideology)
     };
 }
@@ -101,4 +76,20 @@ function updateNationStats(nation, impacts) {
         gdp: nation.stats.gdp + impacts.gdp
     };
     return __assign(__assign({}, nation), { stats: newStats });
+}
+function getRandomIdeology() {
+    return ideologies_1.ideologies[Math.floor(Math.random() * ideologies_1.ideologies.length)];
+}
+function listIdeologies() {
+    console.log("\nAvailable Ideologies:");
+    for (var _i = 0, ideologies_2 = ideologies_1.ideologies; _i < ideologies_2.length; _i++) {
+        var ideology = ideologies_2[_i];
+        console.log("\n#".concat(ideology.uid, " - ").concat(ideology.name));
+        console.log("  Economic Freedom: ".concat(ideology.economicFreedom));
+        console.log("  Civil Rights: ".concat(ideology.civilRights));
+        console.log("  Political Freedom: ".concat(ideology.politicalFreedom));
+    }
+}
+function getIdeologyByUID(uid) {
+    return ideologies_1.ideologies.find(function (ideology) { return ideology.uid === uid; }) || null;
 }

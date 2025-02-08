@@ -1,55 +1,9 @@
-import { ideologies } from "./db/ideologies";
-
-interface Ideology {
-  uid: number;
-  name: string;
-  economicFreedom: number;
-  civilRights: number;
-  politicalFreedom: number;
-}
-
-interface Nation {
-  name: string;
-  ideology: Ideology;
-  stats: {
-    economicFreedom: number;
-    civilRights: number;
-    politicalFreedom: number;
-    gdp: number;
-  };
-}
+// birth.ts
+import {ideologies} from './db/ideologies';
+import type { Nation, Ideology, Personality } from './types';
 
 // Default initial GDP value
 const DEFAULT_GDP = 5000;
-
-/**
- * Gets a random ideology from the available options
- */
-export function getRandomIdeology(): Ideology {
-  return ideologies[Math.floor(Math.random() * ideologies.length)];
-}
-
-/**
- * Lists all available ideologies with their values
- */
-export function listIdeologies(): void {
-  console.log("\nAvailable Ideologies:");
-  for (const ideology of ideologies) {
-    console.log(`\n#${ideology.uid} - ${ideology.name}`);
-    console.log(`  Economic Freedom: ${ideology.economicFreedom}`);
-    console.log(`  Civil Rights: ${ideology.civilRights}`);
-    console.log(`  Political Freedom: ${ideology.politicalFreedom}`);
-  }
-}
-
-/**
- * Gets an ideology by its UID
- * @param uid The unique identifier of the ideology
- * @returns The ideology or null if not found
- */
-export function getIdeologyByUID(uid: number): Ideology | null {
-  return ideologies.find(ideology => ideology.uid === uid) || null;
-}
 
 /**
  * Validates a nation name
@@ -80,7 +34,12 @@ function createInitialStats(ideology: Ideology) {
  * @param ideology Chosen ideology
  * @returns New nation object
  */
-export function createNation(name: string, ideology: Ideology): Nation | null {
+export function createNation(
+  name: string, 
+  ideology: Ideology, 
+  rulerType: 'human' | 'AI' = 'human',
+  personality?: Personality
+): Nation | null {
   if (!validateNationName(name)) {
     console.error("Invalid nation name");
     return null;
@@ -89,6 +48,8 @@ export function createNation(name: string, ideology: Ideology): Nation | null {
   return {
     name,
     ideology,
+    rulerType,
+    personality,
     stats: createInitialStats(ideology)
   };
 }
@@ -121,5 +82,20 @@ export function updateNationStats(
   };
 }
 
-export { ideologies };
-export type { Nation, Ideology };
+export function getRandomIdeology(): Ideology {
+  return ideologies[Math.floor(Math.random() * ideologies.length)];
+}
+
+export function listIdeologies(): void {
+  console.log("\nAvailable Ideologies:");
+  for (const ideology of ideologies) {
+    console.log(`\n#${ideology.uid} - ${ideology.name}`);
+    console.log(`  Economic Freedom: ${ideology.economicFreedom}`);
+    console.log(`  Civil Rights: ${ideology.civilRights}`);
+    console.log(`  Political Freedom: ${ideology.politicalFreedom}`);
+  }
+}
+
+export function getIdeologyByUID(uid: number): Ideology | null {
+  return ideologies.find(ideology => ideology.uid === uid) || null;
+}
