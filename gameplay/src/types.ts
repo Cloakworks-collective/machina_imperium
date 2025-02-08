@@ -43,4 +43,10 @@ interface Personality {
     };
   }
   
-  export type { GameState, Nation, Ideology, Personality };
+  interface Vector3D {
+    x: number;
+    y: number;
+    z: number;
+  }
+  
+  export type { GameState, Nation, Ideology, Personality, Vector3D };

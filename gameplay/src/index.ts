@@ -1,7 +1,6 @@
 import PromptSync = require("prompt-sync");
-// import * as PromptSync from 'prompt-sync';
 import { setupGame, createPlayerNation, createAINations, playGame } from './play';
-import { getGame, isGameReady, listActiveGames } from './gameService';
+import { getGame, isGameReady, listActiveGames } from './gameHelpers';
 
 const prompt = PromptSync({ sigint: true });
 

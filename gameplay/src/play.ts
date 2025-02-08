@@ -1,14 +1,22 @@
 // play.ts
 import PromptSync = require("prompt-sync");
-// import * as PromptSync from 'prompt-sync';
+
 import { issuesData } from "./db/issues";
-import { updateNationStats } from "./birth";
-import type { Nation, Ideology, Personality } from './types';
-import { euclideanDistance } from './helper';
 import {ideologies} from './db/ideologies';
-import { createGame, createNation, selectPersonalities, getGame, isGameReady } from './gameService';
+import type { Nation, Ideology, Personality } from './types';
+
+import { 
+      createGame, 
+      createNation,
+      updateNationStats, 
+      selectPersonalities, 
+      getGame, 
+      isGameReady, 
+      euclideanDistance, 
+      displayGameInfo, 
+      compareNations 
+} from './gameHelpers';
 import { storeGame } from './gameStorage';
-import { displayGameInfo, compareNations } from './gameInfo';
 
 const prompt = PromptSync({ sigint: true });
 
