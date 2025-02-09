@@ -1,0 +1,26 @@
+{
+  "name": "gameplay",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^22.13.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "@langchain/openai": "^0.4.3",
+    "@types/prompt-sync": "^4.2.3",
+    "dotenv": "^16.4.7",
+    "prompt-sync": "^4.2.0",
+    "zod": "^3.24.1"
+  }
+}
