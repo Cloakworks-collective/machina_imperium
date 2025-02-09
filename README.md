@@ -1,4 +1,4 @@
-![alt text](image-3.png)
+![alt text](images/image-3.png)
 
 # Machina Imperium
 
@@ -8,15 +8,15 @@ This game serves as an experiment in human-in-the-loop agentic gameplay and auto
 
 ### Example Issue of the Game:  
 
-![alt text](image-4.png)
+![alt text](images/image-4.png)
 
 Both human and AI-led nations must navigate complex socio-political and economic dilemmas, shaping their national policies over time. Decisions impact a nation's **political freedom, economic freedom, and civil liberties**, gradually shifting its dominant ideology. As nations react to evolving internal and external pressures, they may transform from capitalist democracies to totalitarian regimes—or vice versa.  
 
-![alt text](image-7.png)
+![alt text](images/image-7.png)
 
 Which option will your nation choose?  
 
-![alt text](image-1.png)
+![alt text](images/image-1.png)
 
 ## Game Flow
 
@@ -54,22 +54,22 @@ Which option will your nation choose?
 ### The Governor (agents/governor.ts)
 An AI agent responsible for nation management and decision-making.
 
-![alt text](image-5.png)
+![alt text](images/image-5.png)
 
 
 ### The Diplomat (agents/diplomat.ts)
 An AI agent handling international relations and alliance formation.
 
-![alt text](image-8.png)
+![alt text](images/image-8.png)
 
 ### The Historian (agents/historian.ts)
 An AI agent that chronicles the journey of a nation.
 
-![alt text](image-6.png)
+![alt text](images/image-6.png)
 
 ## Ideologies and Metrics
 
-![alt text](image-2.png)
+![alt text](images/image-2.png)
 
 Nations are measured on three key metrics:
 - **Economic Freedom** (0-100)
@@ -133,7 +133,7 @@ The game features various historical personalities including:
 
 Each leader has unique attributes affecting their decision-making: (`db/personalities.ts`)
 
-![alt text](image-11.png)
+![alt text](images/image-11.png)
 
 
 ### Political Spectrum Distribution
@@ -154,7 +154,7 @@ Each leader has unique attributes affecting their decision-making: (`db/personal
 * Totalitarian Left Leaders (State-controlled economy, authoritarian governance)
   * Joseph Stalin (Soviet Union)
 
-![alt text](image.png)
+![alt text](images/image.png)
 
 ---
 
@@ -162,12 +162,12 @@ Each leader has unique attributes affecting their decision-making: (`db/personal
 
 We have a straightforward smart contract that logs all human and AI moves within the game state. You can find the contract and its basic test cases in the smart-contract folder.
 
-![alt text](image-9.png)
+![alt text](images/image-9.png)
 
 Right now, it is not really decentralized, in the future we will have to put AI agents in TEE to make them verified and have them interact with smart contract.
 
 Simple tests - 
-![alt text](image-10.png)
+![alt text](images/image-10.png)
 
 ## Getting Started
 
