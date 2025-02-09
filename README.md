@@ -1,22 +1,24 @@
+![alt text](image-3.png)
+
 # Machina Imperium
 
-A multiplayer nation simulation game where players compete against AI-controlled nations led by historical personalities. Each decision shapes your nation's future and influences potential alliances.
+A multiplayer nation simulation game inspired by *NationStates*, where players create nations aligned with their political ideals and compete against AI-controlled nations led by historical personalities. Every decision shapes your nation's future, influencing alliances and economic growth. As a PvP experience, nations strive to achieve the highest GDP while forging strategic partnerships with AI-driven nations. 
+  
+This game serves as an experiment in human-in-the-loop agentic gameplay and autonomous agent-to-agent interactions, where emergent narratives unfold through dynamic decision-making.  
 
-## Game Overview
+Both human and AI-led nations must navigate complex socio-political and economic dilemmas, shaping their national policies over time. Decisions impact a nation's **political freedom, economic freedom, and civil liberties**, gradually shifting its dominant ideology. As nations react to evolving internal and external pressures, they may transform from capitalist democracies to totalitarian regimes—or vice versa.  
 
-In Machina Imperium, players create and manage their own nations while competing and potentially allying with AI-controlled nations led by historical figures. Make strategic decisions, form alliances, and compete for victory through economic dominance and diplomatic relations.
+![alt text](image-7.png)
+
+---
+
+## Example Issue of the Game:  
+
+![alt text](image-4.png)
+
+Which option will your nation choose?  
 
 ![alt text](image-1.png)
-
-
-### Key Features
-
-- Multiplayer gameplay with 2 human players
-- AI-controlled nations with historical leader personalities
-- Dynamic decision-making system
-- Alliance formation based on national compatibility
-- Ideology evolution based on decisions
-- Statistical nation tracking and comparison
 
 ## Game Flow
 
@@ -44,30 +46,28 @@ In Machina Imperium, players create and manage their own nations while competing
      - Political Freedom similarity
      - Overall ideology match
 
-## AI Agents
+5. **Winner Calculations**
+   - Higher GDP = 20 points
+   - Per Allied AI Nation = 10 Oints
+   - Player with highest points win!   
 
-### The Governor (governor.ts)
+## What does the agents do in the game? (for now)
+
+### The Governor (agents/governor.ts)
 An AI agent responsible for nation management and decision-making.
 
-**Features:**
-- Makes decisions based on leader personality
-- Considers nation's current metrics
-- Evaluates options impact on:
-  - Economic freedom
-  - Civil rights
-  - Political freedom
-  - GDP
+![alt text](image-5.png)
 
-### The Diplomat (diplomat.ts)
+
+### The Diplomat (agents/diplomat.ts)
 An AI agent handling international relations and alliance formation.
 
-**Features:**
-- Analyzes nation compatibility
-- Compares freedom metrics
-- Forms alliances based on:
-  - Statistical alignment
-  - Ideological compatibility
-  - National metrics
+![alt text](image-8.png)
+
+### The Historian (agents/historian.ts)
+An AI agent that chronicles the journey of a nation.
+
+![alt text](image-6.png)
 
 ## Ideologies and Metrics
 
@@ -79,6 +79,47 @@ Nations are measured on three key metrics:
 - **Political Freedom** (0-100)
 
 These metrics evolve based on decisions and determine the nation's governing ideology, ranging from "Psychotic Dictatorship" to "Anarchy" with 27 possible forms of government.
+
+## **How Countries Are Put into Ideological Buckets Using 1-NN**  
+
+We use **1-Nearest Neighbor (1-NN)**, a simplified KNN, to classify countries into ideological groups based on three freedoms:  
+
+1. **Economic Freedom** (how free the market is)  
+2. **Civil Rights** (how much personal freedom people have)  
+3. **Political Freedom** (how fair and open the government is)  
+
+Each country is represented as a **point in 3D space**, with coordinates:  
+```
+(Economic Freedom, Civil Rights, Political Freedom)
+```
+
+---
+
+## **Step-by-Step Process**  
+
+### **1. Measure Distance**  
+   - We calculate the **Euclidean distance** between a new country and all known countries:  
+
+$$
+d = \sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2 + + (z_2 - z_1)^2}
+$$
+   
+   - This tells us which country is the **most similar** in terms of freedom.
+
+### **2. Find the Nearest Neighbor**  
+   - The country that is **closest** in this 3D space is chosen as the **best match**.
+
+### **3. Assign the Ideological Bucket**  
+   - The new country is placed into the **same bucket** as its nearest neighbor.  
+
+
+
+### **Example**  
+
+- A new country has scores **(7, 5, 6)**.  
+- We check the distance to all known countries.  
+- The closest country is in the "Social Democracy" bucket.  
+- So, the new country is classified as a **Social Democracy** too.
 
 ## Historical Leaders
 
@@ -101,9 +142,7 @@ Each leader has unique attributes affecting their decision-making:
 - Flexibility
 - Loyalty
 
-## Leader Political Balance
 
-The game features historical personalities who shape AI-controlled nations. These leaders span a range of political ideologies, influencing decision-making, alliances, and governance styles.
 
 ### Political Spectrum Distribution
 
@@ -125,77 +164,7 @@ The game features historical personalities who shape AI-controlled nations. Thes
 
 ![alt text](image.png)
 
-## Game States
-
-The game progresses through various states:
-1. `created` - Initial game creation
-2. `player1_completed` - First player finished
-3. `player2_completed` - Second player finished
-4. `ready` - Ready for AI processing
-5. `processing` - AI nations making decisions
-6. `ready_for_processing_alliance` - Ready for alliance formation
-
-## Technical Implementation
-
-Built using:
-- TypeScript
-- LangChain for AI decision-making
-- Zod for type validation
-- OpenAI's GPT for AI personality simulation
-
-## Command Menu Options
-
-1. Create new game
-2. Join existing game
-3. List active games
-4. Process the Game (AI decisions)
-5. Show Nation Decisions
-6. Process Alliances
-7. Exit
-
-# **How Countries Are Put into Ideological Buckets Using 1-NN**  
-
-We use **1-Nearest Neighbor (1-NN)**, a simple machine-learning method, to classify countries into ideological groups based on three freedoms:  
-
-1. **Economic Freedom** (how free the market is)  
-2. **Civil Rights** (how much personal freedom people have)  
-3. **Political Freedom** (how fair and open the government is)  
-
-Each country is represented as a **point in 3D space**, with coordinates:  
-```
-(Economic Freedom, Civil Rights, Political Freedom)
-```
-
 ---
-
-## **Step-by-Step Process**  
-
-### **1. Measure Distance**  
-   - We calculate the **Euclidean distance** between a new country and all known countries:  
-   ```
-   d(A, B) = sqrt((E_A - E_B)^2 + (C_A - C_B)^2 + (P_A - P_B)^2)
-   ```  
-   - This tells us which country is the **most similar** in terms of freedom.
-
-### **2. Find the Nearest Neighbor**  
-   - The country that is **closest** in this 3D space is chosen as the **best match**.
-
-### **3. Assign the Ideological Bucket**  
-   - The new country is placed into the **same bucket** as its nearest neighbor.  
-
----
-
-## **Example**  
-
-- A new country has scores **(7, 5, 6)**.  
-- We check the distance to all known countries.  
-- The closest country is in the "Social Democracy" bucket.  
-- So, the new country is classified as a **Social Democracy** too.
-
----
-
-
-
 
 ## Getting Started
 
@@ -205,3 +174,11 @@ npm run dev
 ```
 
 Follow the on-screen prompts to create or join a game.
+
+## Smart Contracts 
+Ethereum Sepolia - 0x30CCF5C0Ea4F871398136DD643A0544Aba39b26D
+Verified Link - https://sepolia.etherscan.io/address/0x30ccf5c0ea4f871398136dd643a0544aba39b26d
+
+Base Sepolia - 
+
+

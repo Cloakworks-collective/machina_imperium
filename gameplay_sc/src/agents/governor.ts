@@ -1,3 +1,4 @@
+// governor.ts
 import { ChatOpenAI } from "@langchain/openai";
 import { PromptTemplate } from "@langchain/core/prompts";
 
@@ -10,15 +11,15 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const llm = new ChatOpenAI({
-  modelName: "gpt-3.5-turbo",
-  temperature: 0.7,
+    modelName: "gpt-3.5-turbo",
+    temperature: 0.7,
 });
 
 const verdict = z.object({
-  issue: z.string().describe("The issue at hand"),
-  chosen: z.number().describe("The chosen option identifier"),
-  chosenStatement: z.string().describe("The chosen option statement"),
-  reasoning: z.string().describe("The reasoning behind the choice"),
+    issue: z.string().describe("The issue at hand"),
+    chosen: z.number().describe("The chosen option identifier"),
+    chosenStatement: z.string().describe("The chosen option statement"),
+    reasoning: z.string().describe("The reasoning behind the choice"),
 });
 
 const structuredLlm = llm.withStructuredOutput(verdict, { name: "verdict" });
@@ -37,67 +38,70 @@ Based on your personality and leadership style, which option would you choose.
 `);
 
 function formatPersonalityTraits(personality: Personality): string {
-  return Object.entries(personality.attributes)
-    .map(([trait, value]) => `${trait}: ${value}/10`)
-    .join('\n');
+    return Object.entries(personality.attributes)
+        .map(([trait, value]) => `${trait}: ${value}/10`)
+        .join('\n');
 }
 
 function formatOptions(options: Option[]): string {
-  return options
-    .map(opt => `${opt.id}: ${opt.name}\n${opt.description}`)
-    .join('\n\n');
+    return options
+        .map(opt => `${opt.id}: ${opt.name}\n${opt.description}`)
+        .join('\n\n');
 }
 
 async function getPersonalityDecision(
-  personality: Personality,
-  issue: Issue
+    personality: Personality,
+    issue: Issue
 ): Promise<{ option: Option; decision: Decision }> {
-  
-  const prompt = await decisionTemplate.format({
-    personality_name: personality.name,
-    personality_traits: formatPersonalityTraits(personality),
-    issue_description: issue.description.replace(/\${nationName}/g, personality.nationName),
-    options: formatOptions(issue.options),
-  });
+    
+    const prompt = await decisionTemplate.format({
+        personality_name: personality.name,
+        personality_traits: formatPersonalityTraits(personality),
+        issue_description: issue.description.replace(/\${nationName}/g, personality.nationName),
+        options: formatOptions(issue.options),
+    });
 
-  const response = await structuredLlm.invoke(prompt);
+    const response = await structuredLlm.invoke(prompt);
 
-  console.log('response ------>', response);
+    console.log('response ------>', response);
 
-  const chosenOption = issue.options.find(option => option.id === response.chosen) || issue.options[0];
-  
-  const decision: Decision = {
-    issueId: issue.id,
-    issueName: issue.name,
-    chosenOptionId: chosenOption.id,
-    chosenOptionName: chosenOption.name,
-    description: chosenOption.description.replace(/\${nationName}/g, personality.nationName)
-  };
+    const chosenOption = issue.options.find(option => option.id === response.chosen) || issue.options[0];
+    
+    const decision: Decision = {
+        issueId: issue.id,
+        issueName: issue.name,
+        chosenOptionId: chosenOption.id,
+        chosenOptionName: chosenOption.name,
+        description: chosenOption.description.replace(/\${nationName}/g, personality.nationName)
+    };
 
-  return { option: chosenOption, decision };
+    return { option: chosenOption, decision };
 }
 
 export async function playAINation(nation: Nation): Promise<Nation> {
-  if (!nation.personality) {
-    console.error("Nation does not have a personality assigned.");
-    return nation;
-  }
+    if (!nation.personality) {
+        console.error("Nation does not have a personality assigned.");
+        return nation;
+    }
 
-  const personality = nation.personality;
-  console.log(`\n=== ${personality.name}'s Turn ===`);
-  
-  let currentNation: Nation = { 
-    ...nation, 
-    decisions: [] 
-  };
+    const personality = nation.personality;
+    console.log(`\n=== ${personality.name}'s Turn ===`);
+    
+    let currentNation: Nation = { 
+        ...nation, 
+        decisions: [] 
+    };
 
-  const issuesToHandle = issuesData.issues.slice(0, 2);
+    const issuesToHandle = issuesData.issues.slice(0, 2);
 
-  for (const issue of issuesToHandle) {
-    const result = await getPersonalityDecision(personality, issue);
-    currentNation = updateNationStats(currentNation, result.option.impact);
-    currentNation.decisions.push(result.decision);
-  }
+    for (const issue of issuesToHandle) {
+        const result = await getPersonalityDecision(personality, issue);
+        const updatedNation = await updateNationStats(currentNation, result.option.impact);
+        currentNation = {
+            ...updatedNation,
+            decisions: [...currentNation.decisions, result.decision]
+        };
+    }
 
-  return currentNation;
+    return currentNation;
 }

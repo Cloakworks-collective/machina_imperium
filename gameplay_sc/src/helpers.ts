@@ -1,20 +1,25 @@
 import type { GameState, GameStatus, Nation, Ideology, Personality, Vector3D } from './types';
 import { getStoredGame } from './storage';
 import personalities from './db/personalities';
-import {ideologies} from './db/ideologies';
+import { ideologies } from './db/ideologies';
+import { 
+    createGameOnChain, 
+    joinGameOnChain, 
+    submitDecisionsOnChain, 
+    updateGameStatusOnChain, 
+    setWinnerOnChain,
+    getGameStateFromChain,
+    generateGameId as generateChainGameId
+} from './contractHelpers';
 
 // Default initial GDP value
 const DEFAULT_GDP = 5000;
 
+// Local state for features not in smart contract
 const games = new Map<string, GameState>();
-  
+
 /**
  * Calculates the Euclidean distance between two points in 3D space.
- * Works for any object with three numerical properties.
- *
- * @param a - First point/vector { x, y, z }.
- * @param b - Second point/vector { x, y, z }.
- * @returns Euclidean distance between the two points.
  */
 export function euclideanDistance(a: Vector3D, b: Vector3D): number {
   return Math.sqrt(
@@ -22,20 +27,15 @@ export function euclideanDistance(a: Vector3D, b: Vector3D): number {
     Math.pow(a.y - b.y, 2) +
     Math.pow(a.z - b.z, 2)
   );
-}  
-
+}
 
 export function selectPersonalities(count: number = 3): Personality[] {
   const shuffled = [...personalities].sort(() => 0.5 - Math.random());
   return shuffled.slice(0, count);
 }
 
-// CREATE GAME
-
-
 /**
  * Generates a random game ID.
- * @returns Random game ID
  */
 function generateGameId(): string {
   const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -47,16 +47,18 @@ function generateGameId(): string {
 }
 
 /**
- * Creates a new game with selected personalities.
- * @param selectedPersonalities Array of selected personalities
- * @returns New game ID
+ * Creates a new game with selected personalities
  */
-export function createGame(selectedPersonalities: Personality[]): string {
+export async function createGame(selectedPersonalities: Personality[]): Promise<string> {
   let gameId;
   do {
     gameId = generateGameId();
   } while (games.has(gameId));
 
+  // Create game on blockchain
+  await createGameOnChain(gameId);
+
+  // Store additional data locally
   games.set(gameId, {
     id: gameId,
     status: 'created',
@@ -66,25 +68,14 @@ export function createGame(selectedPersonalities: Personality[]): string {
     selectedPersonalities,
     alliances: []
   });
+
   return gameId;
 }
 
-// NATION MANAGEMENT
-
-/**
- * Validates a nation name
- * @param name The proposed nation name
- * @returns boolean indicating if name is valid
- */
 export function validateNationName(name: string): boolean {
   return name.length > 0 && name.length <= 50;
 }
 
-/**
- * Creates initial nation stats based on ideology
- * @param ideology The chosen ideology
- * @returns Initial nation stats
- */
 function createInitialStats(ideology: Ideology) {
   return {
     economicFreedom: ideology.economicFreedom,
@@ -94,12 +85,6 @@ function createInitialStats(ideology: Ideology) {
   };
 }
 
-/**
- * Creates a new nation with given name and ideology
- * @param name Nation name
- * @param ideology Chosen ideology
- * @returns New nation object
- */
 export function createBasicNation(
   name: string, 
   ideology: Ideology, 
@@ -121,28 +106,17 @@ export function createBasicNation(
   };
 }
 
-
-
-/**
- * Creates a new nation and adds it to the game state.
- * @param gameId ID of the game
- * @param name Name of the nation
- * @param ideology Ideology of the nation
- * @param rulerType Type of ruler ('human' or 'AI')
- * @param personality Personality of the ruler (optional)
- * @returns New nation object or null if game not found
- */
-export function createNation(
+export async function createNation(
   gameId: string,
   name: string,
   ideology: Ideology,
   rulerType: 'human' | 'AI',
   personality?: Personality
-): Nation | null {
+): Promise<Nation | null> {
   const game = games.get(gameId);
   if (!game) return null;
 
-  const basicNation = createBasicNation(name, ideology);
+  const basicNation = createBasicNation(name, ideology, rulerType, personality);
   if (!basicNation) return null;
 
   const nation: Nation = {
@@ -156,6 +130,8 @@ export function createNation(
       game.player1Nation = nation;
       game.status = 'created';
     } else if (!game.player2Nation) {
+      // Join game on blockchain
+      await joinGameOnChain(gameId);
       game.player2Nation = nation;
       game.status = 'player2_completed';
     }
@@ -171,13 +147,7 @@ export function createNation(
   return nation;
 }
 
-/**
- * Updates nation stats based on impacts
- * @param nation Current nation
- * @param impacts Impact values to apply
- * @returns Updated nation
- */
-export function updateNationStats(
+export async function updateNationStats(
   nation: Nation,
   impacts: {
     economicFreedom: number;
@@ -185,7 +155,7 @@ export function updateNationStats(
     politicalFreedom: number;
     gdp: number;
   }
-): Nation {
+): Promise<Nation> {
   const newStats = {
     economicFreedom: Math.max(0, Math.min(100, nation.stats.economicFreedom + impacts.economicFreedom)),
     civilRights: Math.max(0, Math.min(100, nation.stats.civilRights + impacts.civilRights)),
@@ -193,44 +163,64 @@ export function updateNationStats(
     gdp: nation.stats.gdp + impacts.gdp
   };
 
-  return {
+  const updatedNation = {
     ...nation,
     stats: newStats,
     decisions: nation.decisions || []
   };
+
+  // If this is a player nation, update the blockchain
+  if (nation.rulerType === 'human') {
+    // Get the current game state to determine if this is player1 or player2
+    const game = await getGame(nation.name); // assuming name is unique
+    if (game) {
+      const isPlayer1 = game.player1Nation?.name === nation.name;
+      await submitDecisionsOnChain(nation.name, updatedNation, isPlayer1);
+    }
+  }
+
+  return updatedNation;
 }
 
-// GAME STATE GETTERS
+export async function getGame(gameId: string): Promise<GameState | null> {
+  try {
+    // Get blockchain state
+    const chainState = await getGameStateFromChain(gameId);
+    if (!chainState) return null;
 
-/**
- * Retrieves the game state by ID.
- * @param gameId ID of the game
- * @returns Game state or null if not found
- */
-export function getGame(gameId: string): GameState | null {
-  return games.get(gameId) || null;
+    // Get local state
+    const localGame = games.get(gameId);
+    if (!localGame) return chainState;
+
+    // Combine states
+    return {
+      ...localGame,
+      status: chainState.status,
+      player1Nation: chainState.player1Nation || localGame.player1Nation,
+      player2Nation: chainState.player2Nation || localGame.player2Nation
+    };
+  } catch (error) {
+    console.error("Error fetching game:", error);
+    return games.get(gameId) || null;
+  }
 }
 
-/**
- * Checks if a game is ready to start.
- * A game is considered ready when both players have joined and made their decisions.
- * @param gameId ID of the game
- * @returns True if the game is ready, false otherwise
- */
-export function isGameReady(gameId: string): boolean {
-  const game = games.get(gameId);
+export async function isGameReady(gameId: string): Promise<boolean> {
+  const game = await getGame(gameId);
   if (!game) return false;
-  
-  // Game is ready only when both players have completed their decisions
   return game.status === 'ready';
 }
 
-export function updateGameStatus(gameId: string, status: GameStatus): void {
+export async function updateGameStatus(gameId: string, status: GameStatus): Promise<void> {
+  // Update blockchain
+  await updateGameStatusOnChain(gameId, status);
+
+  // Update local state
   const game = games.get(gameId);
-  if (!game) return;
-  
-  game.status = status;
-  games.set(gameId, game);
+  if (game) {
+    game.status = status;
+    games.set(gameId, game);
+  }
 }
 
 /**
@@ -391,27 +381,22 @@ export function listIdeologies(): void {
 export function getIdeologyByUID(uid: number): Ideology | null {
   return ideologies.find(ideology => ideology.uid === uid) || null;
 }
-/**
- * Calculates the winner of the game based on GDP and alliances
- * @param gameId The ID of the game
- * @returns Object containing winner information and scores
- */
-export function calculateWinner(gameId: string): { 
+
+export async function calculateWinner(gameId: string): Promise<{ 
   winner: string;
   player1Score: number;
   player2Score: number;
   breakdown: string;
-} | null {
-  const game = getGame(gameId);
+} | null> {
+  const game = await getGame(gameId);
   if (!game || !game.player1Nation || !game.player2Nation || !game.alliances) {
     return null;
   }
 
-  // Initialize scores
   let player1Score = 0;
   let player2Score = 0;
 
-  // Calculate GDP points (20 points for higher GDP)
+  // Calculate GDP points
   const gdp1 = game.player1Nation.stats.gdp;
   const gdp2 = game.player2Nation.stats.gdp;
   if (gdp1 > gdp2) {
@@ -420,7 +405,7 @@ export function calculateWinner(gameId: string): {
     player2Score += 20;
   }
 
-  // Calculate alliance points (10 points per AI ally)
+  // Calculate alliance points
   game.alliances.forEach(alliance => {
     if (alliance.chosenAlly === game.player1Nation!.name) {
       player1Score += 10;
@@ -429,7 +414,6 @@ export function calculateWinner(gameId: string): {
     }
   });
 
-  // Create score breakdown
   const breakdown = `
 Score Breakdown:
 ---------------
@@ -442,11 +426,15 @@ ${game.player2Nation.name}:
 GDP Points: ${gdp2 > gdp1 ? 20 : 0} (GDP: ${gdp2})
 Alliance Points: ${Math.floor((player2Score - (gdp2 > gdp1 ? 20 : 0)))} (${Math.floor((player2Score - (gdp2 > gdp1 ? 20 : 0)) / 10)} allies)
 Total: ${player2Score}
-  `;
+`;
+
+  // Update winner on chain
+  const winner = player1Score > player2Score ? game.player1Nation.name : game.player2Nation.name;
+  const winningScore = Math.max(player1Score, player2Score);
+  await setWinnerOnChain(gameId, winner, winningScore);
 
   return {
-    winner: player1Score > player2Score ? game.player1Nation.name : 
-            player2Score > player1Score ? game.player2Nation.name : 'Tie',
+    winner,
     player1Score,
     player2Score,
     breakdown
