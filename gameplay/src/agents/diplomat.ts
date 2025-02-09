@@ -145,7 +145,7 @@ export async function processAlliances(gameId: string): Promise<AllianceDecision
   const currentGame = getGame(gameId);
   if (currentGame) {
     currentGame.alliances = alliances;
-    updateGameStatus(gameId, 'completed_alliace_processing');
+    updateGameStatus(gameId, 'completed_alliance_processing');
   }
 
   return alliances;

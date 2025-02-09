@@ -120,7 +120,7 @@ function displayNationStatus(nation: Nation) {
 }
 
 export async function setupGame(): Promise<string> {
-  console.log("Welcome to Nation Builder 2025 - Multiplayer!\n");
+  console.log("Welcome to Machina Imperium - Multiplayer!\n");
 
   const personalities = selectPersonalities(3);
   console.log("\nSelected Random AI Leaders:");

@@ -391,3 +391,64 @@ export function listIdeologies(): void {
 export function getIdeologyByUID(uid: number): Ideology | null {
   return ideologies.find(ideology => ideology.uid === uid) || null;
 }
+/**
+ * Calculates the winner of the game based on GDP and alliances
+ * @param gameId The ID of the game
+ * @returns Object containing winner information and scores
+ */
+export function calculateWinner(gameId: string): { 
+  winner: string;
+  player1Score: number;
+  player2Score: number;
+  breakdown: string;
+} | null {
+  const game = getGame(gameId);
+  if (!game || !game.player1Nation || !game.player2Nation || !game.alliances) {
+    return null;
+  }
+
+  // Initialize scores
+  let player1Score = 0;
+  let player2Score = 0;
+
+  // Calculate GDP points (20 points for higher GDP)
+  const gdp1 = game.player1Nation.stats.gdp;
+  const gdp2 = game.player2Nation.stats.gdp;
+  if (gdp1 > gdp2) {
+    player1Score += 20;
+  } else if (gdp2 > gdp1) {
+    player2Score += 20;
+  }
+
+  // Calculate alliance points (10 points per AI ally)
+  game.alliances.forEach(alliance => {
+    if (alliance.chosenAlly === game.player1Nation!.name) {
+      player1Score += 10;
+    } else if (alliance.chosenAlly === game.player2Nation!.name) {
+      player2Score += 10;
+    }
+  });
+
+  // Create score breakdown
+  const breakdown = `
+Score Breakdown:
+---------------
+${game.player1Nation.name}:
+GDP Points: ${gdp1 > gdp2 ? 20 : 0} (GDP: ${gdp1})
+Alliance Points: ${Math.floor((player1Score - (gdp1 > gdp2 ? 20 : 0)))} (${Math.floor((player1Score - (gdp1 > gdp2 ? 20 : 0)) / 10)} allies)
+Total: ${player1Score}
+
+${game.player2Nation.name}:
+GDP Points: ${gdp2 > gdp1 ? 20 : 0} (GDP: ${gdp2})
+Alliance Points: ${Math.floor((player2Score - (gdp2 > gdp1 ? 20 : 0)))} (${Math.floor((player2Score - (gdp2 > gdp1 ? 20 : 0)) / 10)} allies)
+Total: ${player2Score}
+  `;
+
+  return {
+    winner: player1Score > player2Score ? game.player1Nation.name : 
+            player2Score > player1Score ? game.player2Nation.name : 'Tie',
+    player1Score,
+    player2Score,
+    breakdown
+  };
+}

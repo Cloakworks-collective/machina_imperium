@@ -4,7 +4,7 @@ A multiplayer nation simulation game where players compete against AI-controlled
 
 ## Game Overview
 
-In Nation Builder 2025, players create and manage their own nations while competing and potentially allying with AI-controlled nations led by historical figures. The game combines strategic decision-making with dynamic AI interactions.
+In Machina Imperium, players create and manage their own nations while competing and potentially allying with AI-controlled nations led by historical figures. Make strategic decisions, form alliances, and compete for victory through economic dominance and diplomatic relations.
 
 ### Key Features
 

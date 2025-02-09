@@ -1,7 +1,7 @@
 // index.ts
 import PromptSync = require("prompt-sync");
 import { setupGame, createPlayerNation, createAINations, playGame } from './play';
-import { getGame, isGameReady, listActiveGames, updateGameStatus } from './helpers';
+import { getGame, isGameReady, listActiveGames, updateGameStatus, calculateWinner } from './helpers';
 import { processAlliances } from './agents/diplomat';
 import type { Nation } from './types';
 
@@ -107,23 +107,53 @@ async function processAllianceDecisions(gameId: string) {
     alliances.forEach(alliance => {
       console.log(`\n${alliance.aiNationName} has allied with ${alliance.chosenAlly}`);
       console.log(`Reasoning: ${alliance.reasoning}`);
+      console.log(`Compatibility Score: ${alliance.compatibilityScore}%`);
     });
   } catch (error) {
     console.error("Error processing alliances:", error);
   }
 }
 
+async function processWinner(gameId: string) {
+  const game = getGame(gameId);
+  if (!game) {
+    console.log("Game not found!");
+    return;
+  }
+
+  if (game.status !== 'completed_alliance_processing') {
+    console.log("Cannot calculate winner yet! Game must complete alliance processing first.");
+    console.log(`Current game status: ${game.status}`);
+    return;
+  }
+
+  const result = calculateWinner(gameId);
+  if (!result) {
+    console.log("Error calculating winner!");
+    return;
+  }
+
+  console.log("\n=== Game Results ===");
+  console.log(result.breakdown);
+  if (result.winner === 'Tie') {
+    console.log("\n🤝 The game is a tie!");
+  } else {
+    console.log(`\n👑 The winner is: ${result.winner}! 🎉`);
+  }
+}
+
 async function startGame() {
   while (true) {
     console.clear();
-    console.log("Nation Builder 2025 - Multiplayer\n");
+    console.log("Machina Imperium\n");
     console.log("1. Create new game");
     console.log("2. Join existing game");
     console.log("3. List active games");
     console.log("4. Process the Game");
     console.log("5. Show Nation Decisions");
     console.log("6. Process Alliances");
-    console.log("7. Exit");
+    console.log("7. Calculate Winner");
+    console.log("8. Exit");
     
     const choice = prompt("\nSelect an option: ");
 
@@ -190,6 +220,11 @@ async function startGame() {
         await processAllianceDecisions(gameId);
         prompt("\nPress Enter to continue...");
       } else if (choice === "7") {
+        console.log("\nEnter game ID to calculate winner:");
+        const gameId = prompt("> ").trim().toUpperCase();
+        await processWinner(gameId);
+        prompt("\nPress Enter to continue...");
+      } else if (choice === "8") {
         console.log("\nThanks for playing!");
         break;
       }
