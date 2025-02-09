@@ -63,7 +63,8 @@ export function createGame(selectedPersonalities: Personality[]): string {
     player1Nation: null,
     player2Nation: null,
     aiNations: [],
-    selectedPersonalities
+    selectedPersonalities,
+    alliances: []
   });
   return gameId;
 }

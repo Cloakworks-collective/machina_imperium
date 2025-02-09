@@ -1,139 +1,152 @@
-// import { OpenAI } from 'langchain/llms/openai';
-// import { PromptTemplate } from 'langchain/prompts';
-// import type { Nation, Personality } from './types';
-// import { euclideanDistance } from './helpers';
+import { ChatOpenAI } from "@langchain/openai";
+import { PromptTemplate } from "@langchain/core/prompts";
+import { z } from "zod";
+import type { Nation } from '../types';
+import { getGame, updateGameStatus } from '../helpers';
 
-// const llm = new OpenAI({
-//   temperature: 0.7,
-//   modelName: 'gpt-4',
-// });
+// Define the structure for alliance decisions
+interface AllianceDecision {
+  aiNationName: string;
+  chosenAlly: string;
+  reasoning: string;
+  compatibilityScore: number;
+}
 
-// // Create prompt template for diplomatic decisions
-// const diplomaticTemplate = PromptTemplate.fromTemplate(`
-// You are the chief diplomat for {ai_nation_name}, led by {personality_name}. 
-// Your leader's key traits are:
-// {personality_traits}
+const llm = new ChatOpenAI({
+  modelName: "gpt-3.5-turbo",
+  temperature: 0.7,
+});
 
-// You must choose between two potential allies:
+const verdict = z.object({
+  chosenAlly: z.string().describe("The name of the human nation chosen as ally"),
+  reasoning: z.string().describe("The numerical analysis and reasoning behind the alliance choice"),
+  compatibilityScore: z.number().describe("A score from 0-100 indicating how compatible the nations are")
+});
 
-// Nation 1: {player1_name}
-// Ideology: {player1_ideology}
-// Economic Freedom: {player1_economic}
-// Civil Rights: {player1_civil}
-// Political Freedom: {player1_political}
+const structuredLlm = llm.withStructuredOutput(verdict, { name: "verdict" });
 
-// Nation 2: {player2_name}
-// Ideology: {player2_ideology}
-// Economic Freedom: {player2_economic}
-// Civil Rights: {player2_civil}
-// Political Freedom: {player2_political}
+const allianceTemplate = PromptTemplate.fromTemplate(`
+    You are the leader of {nation_name}, analyzing potential alliances based on national compatibility.
+    
+    Your nation's current metrics:
+    Ideology: {nation_ideology}
+    Economic Freedom: {economic_freedom}/100
+    Civil Rights: {civil_rights}/100
+    Political Freedom: {political_freedom}/100
+    
+    Potential human-led allies:
+    {human_nations}
+    
+    Based on comparison of freedom metrics (Economic, Civil Rights, Political) and ideology alignment,
+    which human nation would be the most compatible ally?
+    
+    Calculate compatibility based on:
+    1. Economic Freedom alignment (similar levels)
+    2. Civil Rights alignment
+    3. Political Freedom alignment
+    4. Overall ideology compatibility
+    
+    Provide your choice and reasoning based on metric comparison.
+`);
 
-// The ideological distance calculations show:
-// Distance to Nation 1: {distance1}
-// Distance to Nation 2: {distance2}
+function formatDecisions(nation: Nation): string {
+    return nation.decisions
+      .map(d => `- ${d.issueName}: ${d.chosenOptionName}`)
+      .join('\n');
+}
 
-// Based on your leader's personality and these nations' characteristics, which would you choose as an ally?
-// Consider both ideological alignment and your leader's personality traits.
-// Respond with either "1" or "2" followed by your diplomatic reasoning.
-// `);
+function formatHumanNations(player1: Nation, player2: Nation): string {
+  const formatNationStats = (nation: Nation) => {
+    const totalFreedom = nation.stats.economicFreedom + 
+                        nation.stats.civilRights + 
+                        nation.stats.politicalFreedom;
+    
+    return `
+${nation.name} (${nation.ideology.name})
+----------------------------------------
+Economic Freedom: ${nation.stats.economicFreedom}/100
+Civil Rights: ${nation.stats.civilRights}/100
+Political Freedom: ${nation.stats.politicalFreedom}/100
+Total Freedom Score: ${totalFreedom}/300
 
-// function formatPersonalityTraits(personality: Personality): string {
-//   return Object.entries(personality.attributes)
-//     .map(([trait, value]) => `${trait}: ${value}/10`)
-//     .join('\n');
-// }
+Recent Policy Decisions and Their Impacts:
+${formatDecisions(nation)}
+`;
+  };
 
-// function calculateIdeologicalDistance(nation1: Nation, nation2: Nation): number {
-//   const point1 = {
-//     x: nation1.stats.economicFreedom,
-//     y: nation1.stats.civilRights,
-//     z: nation1.stats.politicalFreedom
-//   };
-  
-//   const point2 = {
-//     x: nation2.stats.economicFreedom,
-//     y: nation2.stats.civilRights,
-//     z: nation2.stats.politicalFreedom
-//   };
+  return `
+=== Potential Ally 1 ===
+${formatNationStats(player1)}
 
-//   return euclideanDistance(point1, point2);
-// }
+=== Potential Ally 2 ===
+${formatNationStats(player2)}
 
-// async function makeAllianceDecision(
-//   aiNation: Nation,
-//   player1Nation: Nation,
-//   player2Nation: Nation
-// ): Promise<{ chosenNation: Nation; reasoning: string }> {
-//   if (!aiNation.personality) {
-//     throw new Error('AI nation must have a personality');
-//   }
+Compare these metrics with your nation's values to determine the best match.
+Calculate absolute differences in each metric to assess compatibility.
+`;
+}
 
-//   const distance1 = calculateIdeologicalDistance(aiNation, player1Nation);
-//   const distance2 = calculateIdeologicalDistance(aiNation, player2Nation);
+async function getAllianceDecision(
+  aiNation: Nation,
+  player1Nation: Nation,
+  player2Nation: Nation
+): Promise<AllianceDecision> {
+  const totalFreedom = aiNation.stats.economicFreedom + 
+                      aiNation.stats.civilRights + 
+                      aiNation.stats.politicalFreedom;
 
-//   const prompt = await diplomaticTemplate.format({
-//     ai_nation_name: aiNation.name,
-//     personality_name: aiNation.personality.name,
-//     personality_traits: formatPersonalityTraits(aiNation.personality),
-//     player1_name: player1Nation.name,
-//     player1_ideology: player1Nation.ideology.name,
-//     player1_economic: player1Nation.stats.economicFreedom,
-//     player1_civil: player1Nation.stats.civilRights,
-//     player1_political: player1Nation.stats.politicalFreedom,
-//     player2_name: player2Nation.name,
-//     player2_ideology: player2Nation.ideology.name,
-//     player2_economic: player2Nation.stats.economicFreedom,
-//     player2_civil: player2Nation.stats.civilRights,
-//     player2_political: player2Nation.stats.politicalFreedom,
-//     distance1: distance1.toFixed(2),
-//     distance2: distance2.toFixed(2)
-//   });
+  const prompt = await allianceTemplate.format({
+    nation_name: aiNation.name,
+    nation_ideology: aiNation.ideology.name,
+    human_nations: formatHumanNations(player1Nation, player2Nation),
+    economic_freedom: aiNation.stats.economicFreedom,
+    civil_rights: aiNation.stats.civilRights,
+    political_freedom: aiNation.stats.politicalFreedom,
+    total_freedom: totalFreedom
+  });
 
-//   const response = await llm.predict(prompt);
-//   const choice = response.trim().startsWith('1') ? player1Nation : player2Nation;
-  
-//   return {
-//     chosenNation: choice,
-//     reasoning: response.replace(/^[12]/, '').trim()
-//   };
-// }
+  const response = await structuredLlm.invoke(prompt);
 
-// export async function calculateAlliances(gameId: string): Promise<void> {
-//   const game = getGame(gameId);
-//   if (!game || !game.player1Nation || !game.player2Nation) {
-//     throw new Error('Invalid game state for alliance calculation');
-//   }
+  return {
+    aiNationName: aiNation.name,
+    chosenAlly: response.chosenAlly,
+    reasoning: response.reasoning,
+    compatibilityScore: response.compatibilityScore
+  };
+}
 
-//   console.log('\n=== FORMING INTERNATIONAL ALLIANCES ===\n');
+export async function processAlliances(gameId: string): Promise<AllianceDecision[]> {
+  const game = getGame(gameId);
+  if (!game || !game.player1Nation || !game.player2Nation) {
+    throw new Error("Invalid game state for alliance processing");
+  }
 
-//   const alliances = {
-//     [game.player1Nation.name]: [] as string[],
-//     [game.player2Nation.name]: [] as string[]
-//   };
+  const alliances: AllianceDecision[] = [];
 
-//   for (const aiNation of game.aiNations) {
-//     const decision = await makeAllianceDecision(
-//       aiNation,
-//       game.player1Nation,
-//       game.player2Nation
-//     );
+  // Process each AI nation's alliance decision
+  for (const aiNation of game.aiNations) {
+    try {
+      console.log(`\nAnalyzing alliance compatibility for ${aiNation.name}...`);
+      const alliance = await getAllianceDecision(
+        aiNation,
+        game.player1Nation,
+        game.player2Nation
+      );
+      alliances.push(alliance);
+      console.log(`${aiNation.name} has chosen to ally with ${alliance.chosenAlly}`);
+      console.log(`Compatibility Score: ${alliance.compatibilityScore}%`);
+      console.log(`Analysis: ${alliance.reasoning}\n`);
+    } catch (error) {
+      console.error(`Error processing alliance for ${aiNation.name}:`, error);
+    }
+  }
 
-//     const allianceName = decision.chosenNation.name;
-//     alliances[allianceName].push(aiNation.name);
+  // Store alliances in game state and update status
+  const currentGame = getGame(gameId);
+  if (currentGame) {
+    currentGame.alliances = alliances;
+    updateGameStatus(gameId, 'completed_alliace_processing');
+  }
 
-//     console.log(`\n🤝 ${aiNation.name}'s Diplomatic Decision:`);
-//     console.log(`Alliance formed with: ${allianceName}`);
-//     console.log(`Diplomatic Reasoning: ${decision.reasoning}`);
-//   }
-
-//   console.log('\n=== FINAL ALLIANCE BREAKDOWN ===');
-//   console.log(`\n${game.player1Nation.name}'s Alliance:`);
-//   console.log(alliances[game.player1Nation.name].length > 0 
-//     ? alliances[game.player1Nation.name].join(', ')
-//     : 'No allies');
-
-//   console.log(`\n${game.player2Nation.name}'s Alliance:`);
-//   console.log(alliances[game.player2Nation.name].length > 0 
-//     ? alliances[game.player2Nation.name].join(', ')
-//     : 'No allies');
-// }
+  return alliances;
+}

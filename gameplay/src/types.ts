@@ -1,4 +1,4 @@
-export type GameStatus = 'created' | 'player1_completed' | 'player2_completed' | 'ready' | 'processing' | 'completed';
+export type GameStatus = 'created' | 'player1_completed' | 'player2_completed' | 'ready' | 'processing' | 'ready_for_processing_alliance' | 'completed_alliace_processing';
 
 interface Decision {
   issueId: number;
@@ -39,6 +39,11 @@ interface GameState {
   player2Nation: Nation | null;
   aiNations: Nation[];
   selectedPersonalities: Personality[];
+  alliances: {
+    aiNationName: string;
+    chosenAlly: string;
+    reasoning: string;
+  }[];
 }
 
 interface Nation {

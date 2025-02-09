@@ -2,6 +2,7 @@
 import PromptSync = require("prompt-sync");
 import { setupGame, createPlayerNation, createAINations, playGame } from './play';
 import { getGame, isGameReady, listActiveGames, updateGameStatus } from './helpers';
+import { processAlliances } from './agents/diplomat';
 import type { Nation } from './types';
 
 const prompt = PromptSync({ sigint: true });
@@ -64,7 +65,7 @@ async function processGame(gameId: string) {
     console.log("\nProcessing game...");
     updateGameStatus(gameId, 'processing');
     await createAINations(gameId);
-    updateGameStatus(gameId, 'completed');
+    updateGameStatus(gameId, 'ready_for_processing_alliance');
     console.log("\nAI nations have made their decisions!");
     
     const finalGame = getGame(gameId);
@@ -85,6 +86,33 @@ async function processGame(gameId: string) {
   }
 }
 
+async function processAllianceDecisions(gameId: string) {
+  const game = getGame(gameId);
+  if (!game) {
+    console.log("Game not found!");
+    return;
+  }
+
+  if (game.status !== 'ready_for_processing_alliance') {
+    console.log("Game is not ready for alliance processing!");
+    console.log(`Current game status: ${game.status}`);
+    return;
+  }
+
+  try {
+    console.log("\nProcessing AI nation alliances...");
+    const alliances = await processAlliances(gameId);
+    
+    console.log("\nAlliance Results:");
+    alliances.forEach(alliance => {
+      console.log(`\n${alliance.aiNationName} has allied with ${alliance.chosenAlly}`);
+      console.log(`Reasoning: ${alliance.reasoning}`);
+    });
+  } catch (error) {
+    console.error("Error processing alliances:", error);
+  }
+}
+
 async function startGame() {
   while (true) {
     console.clear();
@@ -94,7 +122,8 @@ async function startGame() {
     console.log("3. List active games");
     console.log("4. Process the Game");
     console.log("5. Show Nation Decisions");
-    console.log("6. Exit");
+    console.log("6. Process Alliances");
+    console.log("7. Exit");
     
     const choice = prompt("\nSelect an option: ");
 
@@ -156,6 +185,11 @@ async function startGame() {
         showGameDecisions(gameId);
         prompt("\nPress Enter to continue...");
       } else if (choice === "6") {
+        console.log("\nEnter game ID to process alliances:");
+        const gameId = prompt("> ").trim().toUpperCase();
+        await processAllianceDecisions(gameId);
+        prompt("\nPress Enter to continue...");
+      } else if (choice === "7") {
         console.log("\nThanks for playing!");
         break;
       }
