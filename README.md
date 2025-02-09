@@ -166,14 +166,27 @@ Each leader has unique attributes affecting their decision-making:
 
 ---
 
+## Smart Contract
+
+We have a straightforward smart contract that logs all human and AI moves within the game state. You can find the contract and its basic test cases in the smart-contract folder.
+
+![alt text](image-9.png)
+
+Right now, it is not really decentralized, in the future we will have to put AI agents in TEE to make them verified and have them interact with smart contract.
+
+Simple tests - 
+![alt text](image-10.png)
+
 ## Getting Started
 
 ```bash
+cd gameplay 
 npm install
 npm run dev
 ```
 
 Follow the on-screen prompts to create or join a game.
+
 
 ## Smart Contracts 
 Ethereum Sepolia - 0x30CCF5C0Ea4F871398136DD643A0544Aba39b26D
