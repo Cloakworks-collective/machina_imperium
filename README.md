@@ -166,6 +166,10 @@ Right now, it is not really decentralized, in the future we will have to put AI 
 Simple tests - 
 ![alt text](images/image-10.png)
 
+The Game State is stored with combination of Smart Contract Storage and Local Storage 
+
+![alt text](images/image-12.png)
+
 ## Getting Started
 
 ```bash

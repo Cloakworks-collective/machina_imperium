@@ -11,7 +11,7 @@ const CONTRACT_ABI = [{"type":"function","name":"addDecision","inputs":[{"name":
 
 
 // RPC URL from environment variables
-const RPC_URL = process.env.ETH_SEPOLIA_RPC_URL;
+const RPC_URL = process.env.BASE_SEPOLIA_RPC_URL;
 if (!RPC_URL) throw new Error("RPC_URL not found in environment variables");
 
 // Initialize provider
