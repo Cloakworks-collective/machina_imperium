@@ -86,10 +86,7 @@ We use **1-Nearest Neighbor (1-NN)**, a simplified KNN, to classify countries in
 2. **Civil Rights** (how much personal freedom people have)  
 3. **Political Freedom** (how fair and open the government is)  
 
-Each country is represented as a **point in 3D space**, with coordinates:  
-```
-(Economic Freedom, Civil Rights, Political Freedom)
-```
+Each country is represented as a **point in 3D space**, with coordinates.
 
 ---
 
