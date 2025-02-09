@@ -2,6 +2,37 @@
 
 # Machina Imperium
 
+## Table of Contents
+
+<!-- TOC start (generated with https://github.com/derlin/bitdowntoc) -->
+
+- [Machina Imperium](#machina-imperium)
+   * [Overeview](#overeview)
+      + [Example Issue of the Game:  ](#example-issue-of-the-game)
+   * [Game Flow](#game-flow)
+   * [What does the agents do in the game? (for now)](#what-does-the-agents-do-in-the-game-for-now)
+      + [The Governor (agents/governor.ts)](#the-governor-agentsgovernorts)
+      + [The Diplomat (agents/diplomat.ts)](#the-diplomat-agentsdiplomatts)
+      + [The Historian (agents/historian.ts)](#the-historian-agentshistoriants)
+   * [Ideologies and Metrics](#ideologies-and-metrics)
+   * [How Countries Are Put into Ideological Buckets Using 1-NN ](#how-countries-are-put-into-ideological-buckets-using-1-nn)
+   * [Calculation Steps](#calculation-steps)
+      + [1. Measure Distance](#1-measure-distance)
+      + [2. Find the Nearest Neighbor](#2-find-the-nearest-neighbor)
+      + [3. Assign the Ideological Bucket](#3-assign-the-ideological-bucket)
+      + [Example](#example)
+   * [Historical Leaders ](#historical-leaders)
+      + [Political Spectrum Distribution](#political-spectrum-distribution)
+   * [Smart Contract](#smart-contract)
+   * [Run Locally](#run-locally)
+   * [Smart Contracts ](#smart-contracts)
+      + [Ethereum Sepolia ](#ethereum-sepolia)
+      + [Base Sepolia ](#base-sepolia)
+      + [Arbitrum Sepolia ](#arbitrum-sepolia)
+      + [Flow Testnet ](#flow-testnet)
+
+<!-- TOC end -->
+
 ## Overeview
 
 A multiplayer nation simulation game inspired by *NationStates*, where players create nations aligned with their political ideals and compete against AI-controlled nations led by historical personalities. Every decision shapes your nation's future, influencing alliances and economic growth. As a PvP experience, nations strive to achieve the highest GDP while forging strategic partnerships with AI-driven nations. 
@@ -80,7 +111,7 @@ Nations are measured on three key metrics:
 
 These metrics evolve based on decisions and determine the nation's governing ideology, ranging from "Psychotic Dictatorship" to "Anarchy" with 27 possible forms of government.
 
-## **How Countries Are Put into Ideological Buckets Using 1-NN**  
+## How Countries Are Put into Ideological Buckets Using 1-NN 
 
 We use **1-Nearest Neighbor (1-NN)**, a simplified KNN, to classify countries into ideological groups based on three freedoms:  
 
@@ -92,9 +123,9 @@ Each country is represented as a **point in 3D space**, with coordinates.
 
 ---
 
-## **Step-by-Step Process**  
+## Calculation Steps
 
-### **1. Measure Distance**  
+### 1. Measure Distance
    - We calculate the **Euclidean distance** between a new country and all known countries:  
 
 $$
@@ -103,15 +134,15 @@ $$
    
    - This tells us which country is the **most similar** in terms of freedom.
 
-### **2. Find the Nearest Neighbor**  
+### 2. Find the Nearest Neighbor
    - The country that is **closest** in this 3D space is chosen as the **best match**.
 
-### **3. Assign the Ideological Bucket**  
+### 3. Assign the Ideological Bucket
    - The new country is placed into the **same bucket** as its nearest neighbor.  
 
 
 
-### **Example**  
+### Example
 
 - A new country has scores **(7, 5, 6)**.  
 - We check the distance to all known countries.  
@@ -172,7 +203,7 @@ The Game State is stored with combination of Smart Contract Storage and Local St
 
 ![alt text](images/image-12.png)
 
-## Getting Started
+## Run Locally
 
 ```bash
 cd gameplay 
