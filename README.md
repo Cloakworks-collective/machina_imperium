@@ -2,6 +2,8 @@
 
 # Machina Imperium
 
+## Overeview
+
 A multiplayer nation simulation game inspired by *NationStates*, where players create nations aligned with their political ideals and compete against AI-controlled nations led by historical personalities. Every decision shapes your nation's future, influencing alliances and economic growth. As a PvP experience, nations strive to achieve the highest GDP while forging strategic partnerships with AI-driven nations. 
   
 This game serves as an experiment in human-in-the-loop agentic gameplay and autonomous agent-to-agent interactions, where emergent narratives unfold through dynamic decision-making.  
