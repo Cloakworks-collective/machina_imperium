@@ -6,6 +6,9 @@ A multiplayer nation simulation game where players compete against AI-controlled
 
 In Machina Imperium, players create and manage their own nations while competing and potentially allying with AI-controlled nations led by historical figures. Make strategic decisions, form alliances, and compete for victory through economic dominance and diplomatic relations.
 
+![alt text](image-1.png)
+
+
 ### Key Features
 
 - Multiplayer gameplay with 2 human players
@@ -68,6 +71,8 @@ An AI agent handling international relations and alliance formation.
 
 ## Ideologies and Metrics
 
+![alt text](image-2.png)
+
 Nations are measured on three key metrics:
 - **Economic Freedom** (0-100)
 - **Civil Rights** (0-100)
@@ -95,6 +100,30 @@ Each leader has unique attributes affecting their decision-making:
 - Visionary Thinking
 - Flexibility
 - Loyalty
+
+## Leader Political Balance
+
+The game features historical personalities who shape AI-controlled nations. These leaders span a range of political ideologies, influencing decision-making, alliances, and governance styles.
+
+### Political Spectrum Distribution
+
+* Authoritarian Leaders (Strong centralized rule, expansionist tendencies)
+    * Genghis Khan (Mongol Empire)
+    * Napoleon Bonaparte (Imperial France)
+    * Alexander the Great (Macedonian Empire)
+
+* Democratic Right Leaders (Free-market, conservative values)
+    * Winston Churchill (British Empire)
+    * Margaret Thatcher (Neo-Britain)
+    
+* Democratic Left Leaders (Social justice, state-influenced economies)
+    * Nelson Mandela (New South Africa)
+    * Jawaharlal Nehru (Modern India)
+
+* Totalitarian Left Leaders (State-controlled economy, authoritarian governance)
+  * Joseph Stalin (Soviet Union)
+
+![alt text](image.png)
 
 ## Game States
 
@@ -124,15 +153,49 @@ Built using:
 6. Process Alliances
 7. Exit
 
-## Future Enhancements
+# **How Countries Are Put into Ideological Buckets Using 1-NN**  
 
-Potential areas for expansion:
-- More historical personalities
-- Additional policy decisions
-- Economic simulation
-- Military conflicts
-- Trade agreements
-- Cultural influence mechanics
+We use **1-Nearest Neighbor (1-NN)**, a simple machine-learning method, to classify countries into ideological groups based on three freedoms:  
+
+1. **Economic Freedom** (how free the market is)  
+2. **Civil Rights** (how much personal freedom people have)  
+3. **Political Freedom** (how fair and open the government is)  
+
+Each country is represented as a **point in 3D space**, with coordinates:  
+```
+(Economic Freedom, Civil Rights, Political Freedom)
+```
+
+---
+
+## **Step-by-Step Process**  
+
+### **1. Measure Distance**  
+   - We calculate the **Euclidean distance** between a new country and all known countries:  
+   ```
+   d(A, B) = sqrt((E_A - E_B)^2 + (C_A - C_B)^2 + (P_A - P_B)^2)
+   ```  
+   - This tells us which country is the **most similar** in terms of freedom.
+
+### **2. Find the Nearest Neighbor**  
+   - The country that is **closest** in this 3D space is chosen as the **best match**.
+
+### **3. Assign the Ideological Bucket**  
+   - The new country is placed into the **same bucket** as its nearest neighbor.  
+
+---
+
+## **Example**  
+
+- A new country has scores **(7, 5, 6)**.  
+- We check the distance to all known countries.  
+- The closest country is in the "Social Democracy" bucket.  
+- So, the new country is classified as a **Social Democracy** too.
+
+---
+
+
+
 
 ## Getting Started
 

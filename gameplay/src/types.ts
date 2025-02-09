@@ -1,4 +1,7 @@
-export type GameStatus = 'created' | 'player1_completed' | 'player2_completed' | 'ready' | 'processing' | 'ready_for_processing_alliance' | 'completed_alliance_processing' | 'completed';
+export type GameStatus = 'created' | 'player1_completed' | 
+  'player2_completed' | 'ready' | 'processing' | 
+  'ready_for_processing_alliance' | 'completed_alliance_processing' | 'completed';
+
 interface Decision {
   issueId: number;
   issueName: string;

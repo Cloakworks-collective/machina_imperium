@@ -3,6 +3,7 @@ import PromptSync = require("prompt-sync");
 import { setupGame, createPlayerNation, createAINations, playGame } from './play';
 import { getGame, isGameReady, listActiveGames, updateGameStatus, calculateWinner } from './helpers';
 import { processAlliances } from './agents/diplomat';
+import { generateHistory } from './agents/historian';
 import type { Nation } from './types';
 
 const prompt = PromptSync({ sigint: true });
@@ -65,21 +66,30 @@ async function processGame(gameId: string) {
     console.log("\nProcessing game...");
     updateGameStatus(gameId, 'processing');
     await createAINations(gameId);
-    updateGameStatus(gameId, 'ready_for_processing_alliance');
-    console.log("\nAI nations have made their decisions!");
     
     const finalGame = getGame(gameId);
     if (finalGame) {
-      console.log("\nFinal Game Results:");
-      console.log("\nPlayer Nations:");
-      console.log(`Player 1: ${finalGame.player1Nation?.name} - ${finalGame.player1Nation?.ideology.name}`);
-      console.log(`Player 2: ${finalGame.player2Nation?.name} - ${finalGame.player2Nation?.ideology.name}`);
+      console.log("\n=== Nation Reports ===");
+      console.log("\nGenerating historical accounts for all nations...\n");
+
+      if (finalGame.player1Nation) {
+        const history1 = await generateHistory(gameId, finalGame.player1Nation.name);
+        if (history1) console.log(history1);
+      }
       
-      console.log("\nAI Nations:");
-      finalGame.aiNations.forEach(nation => {
-        console.log(`${nation.name} - ${nation.ideology.name}`);
-      });
+      if (finalGame.player2Nation) {
+        const history2 = await generateHistory(gameId, finalGame.player2Nation.name);
+        if (history2) console.log(history2);
+      }
+      
+      for (const aiNation of finalGame.aiNations) {
+        const aiHistory = await generateHistory(gameId, aiNation.name);
+        if (aiHistory) console.log(aiHistory);
+      }
     }
+
+    updateGameStatus(gameId, 'ready_for_processing_alliance');
+    console.log("\nGame is ready for alliance processing!");
   } catch (error) {
     console.error("Error processing game:", error);
     updateGameStatus(gameId, 'ready');
