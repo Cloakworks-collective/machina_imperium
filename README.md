@@ -6,15 +6,13 @@ A multiplayer nation simulation game inspired by *NationStates*, where players c
   
 This game serves as an experiment in human-in-the-loop agentic gameplay and autonomous agent-to-agent interactions, where emergent narratives unfold through dynamic decision-making.  
 
+### Example Issue of the Game:  
+
+![alt text](image-4.png)
+
 Both human and AI-led nations must navigate complex socio-political and economic dilemmas, shaping their national policies over time. Decisions impact a nation's **political freedom, economic freedom, and civil liberties**, gradually shifting its dominant ideology. As nations react to evolving internal and external pressures, they may transform from capitalist democracies to totalitarian regimes—or vice versa.  
 
 ![alt text](image-7.png)
-
----
-
-## Example Issue of the Game:  
-
-![alt text](image-4.png)
 
 Which option will your nation choose?  
 
@@ -121,7 +119,7 @@ $$
 - The closest country is in the "Social Democracy" bucket.  
 - So, the new country is classified as a **Social Democracy** too.
 
-## Historical Leaders
+## Historical Leaders 
 
 The game features various historical personalities including:
 - Genghis Khan (The Mongol Empire)
@@ -133,15 +131,9 @@ The game features various historical personalities including:
 - Joseph Stalin (Soviet Union)
 - Jawaharlal Nehru (Modern India)
 
-Each leader has unique attributes affecting their decision-making:
-- Progressiveness
-- Authoritarianism
-- Pragmatism
-- Economic Focus
-- Visionary Thinking
-- Flexibility
-- Loyalty
+Each leader has unique attributes affecting their decision-making: (`db/personalities.ts`)
 
+![alt text](image-11.png)
 
 
 ### Political Spectrum Distribution
