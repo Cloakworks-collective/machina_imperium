@@ -1,5 +1,5 @@
-import type { GameState, Nation, Ideology, Personality, Vector3D } from './types';
-import { getStoredGame } from './gameStorage';
+import type { GameState, GameStatus, Nation, Ideology, Personality, Vector3D } from './types';
+import { getStoredGame } from './storage';
 import personalities from './db/personalities';
 import {ideologies} from './db/ideologies';
 
@@ -24,7 +24,7 @@ export function euclideanDistance(a: Vector3D, b: Vector3D): number {
   );
 }  
 
-// Add this function
+
 export function selectPersonalities(count: number = 3): Personality[] {
   const shuffled = [...personalities].sort(() => 0.5 - Math.random());
   return shuffled.slice(0, count);
@@ -115,7 +115,8 @@ export function createBasicNation(
     ideology,
     rulerType,
     personality,
-    stats: createInitialStats(ideology)
+    stats: createInitialStats(ideology),
+    decisions: []
   };
 }
 
@@ -155,7 +156,7 @@ export function createNation(
       game.status = 'created';
     } else if (!game.player2Nation) {
       game.player2Nation = nation;
-      game.status = 'player2_joined';
+      game.status = 'player2_completed';
     }
   } else if (rulerType === 'AI') {
     game.aiNations.push(nation);
@@ -193,7 +194,8 @@ export function updateNationStats(
 
   return {
     ...nation,
-    stats: newStats
+    stats: newStats,
+    decisions: nation.decisions || []
   };
 }
 
@@ -210,27 +212,51 @@ export function getGame(gameId: string): GameState | null {
 
 /**
  * Checks if a game is ready to start.
+ * A game is considered ready when both players have joined and made their decisions.
  * @param gameId ID of the game
  * @returns True if the game is ready, false otherwise
  */
 export function isGameReady(gameId: string): boolean {
   const game = games.get(gameId);
-  return game?.status === 'ready';
+  if (!game) return false;
+  
+  // Game is ready only when both players have completed their decisions
+  return game.status === 'ready';
+}
+
+export function updateGameStatus(gameId: string, status: GameStatus): void {
+  const game = games.get(gameId);
+  if (!game) return;
+  
+  game.status = status;
+  games.set(gameId, game);
 }
 
 /**
- * Lists all active games.
+ * Lists all games where Player 1 has completed their turn and Player 2 hasn't joined yet.
  */
 export function listActiveGames(): void {
-  console.log("\nActive Games:");
+  console.log("\nGames Waiting for Player 2:");
+  console.log("==========================");
+  
+  let gamesFound = false;
+  
   games.forEach((game, id) => {
-    if (game.status !== 'ready') {
+    if (game.status === 'player1_completed' && !game.player2Nation) {
+      gamesFound = true;
       console.log(`\nGame ID: ${id}`);
-      console.log(`Status: ${game.status}`);
-      console.log(`Player 1: ${game.player1Nation ? game.player1Nation.name : 'Waiting...'}`);
-      console.log(`Player 2: ${game.player2Nation ? game.player2Nation.name : 'Waiting...'}`);
+      console.log(`Status: Waiting for Player 2`);
+      console.log(`Player 1: ${game.player1Nation?.name} - ${game.player1Nation?.ideology.name}`);
+      console.log(`Selected AI Leaders:`);
+      game.selectedPersonalities.forEach(personality => {
+        console.log(`  - ${personality.name} (${personality.description})`);
+      });
     }
   });
+
+  if (!gamesFound) {
+    console.log("\nNo games currently waiting for Player 2 to join.");
+  }
 }
 
 /**
@@ -323,6 +349,25 @@ export function getRandomIdeology(): Ideology {
   return ideologies[Math.floor(Math.random() * ideologies.length)];
 }
 
+
+export function chooseIdeologyForPersonality(personality: Personality): Ideology {
+  const authScore = personality.attributes.authoritarianism;
+  const progScore = personality.attributes.progressiveness;
+  
+  let bestMatch = ideologies[0];
+  let smallestDiff = Number.MAX_VALUE;
+
+  for (const ideology of ideologies) {
+    const diff = Math.abs(ideology.politicalFreedom - (100 - authScore)) +
+                Math.abs(ideology.civilRights - progScore);
+    if (diff < smallestDiff) {
+      smallestDiff = diff;
+      bestMatch = ideology;
+    }
+  }
+
+  return bestMatch;
+}
 
 /**
  * Lists all available ideologies

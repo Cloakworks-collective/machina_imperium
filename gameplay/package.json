@@ -17,7 +17,10 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
+    "@langchain/openai": "^0.4.3",
     "@types/prompt-sync": "^4.2.3",
-    "prompt-sync": "^4.2.0"
+    "dotenv": "^16.4.7",
+    "prompt-sync": "^4.2.0",
+    "zod": "^3.24.1"
   }
 }

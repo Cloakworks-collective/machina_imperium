@@ -1,22 +1,21 @@
 // play.ts
 import PromptSync = require("prompt-sync");
-
 import { issuesData } from "./db/issues";
-import {ideologies} from './db/ideologies';
-import type { Nation, Ideology, Personality } from './types';
-
+import { ideologies } from './db/ideologies';
+import type { Nation, Ideology, Personality, Issue, Option, Decision } from './types';
 import { 
-      createGame, 
-      createNation,
-      updateNationStats, 
-      selectPersonalities, 
-      getGame, 
-      isGameReady, 
-      euclideanDistance, 
-      displayGameInfo, 
-      compareNations 
-} from './gameHelpers';
-import { storeGame } from './gameStorage';
+  createGame, 
+  createNation,
+  updateNationStats, 
+  selectPersonalities, 
+  getGame, 
+  euclideanDistance, 
+  displayGameInfo, 
+  compareNations,
+  getRandomIdeology,
+} from './helpers';
+import { playAINation } from './agents/governor';
+import { storeGame } from './storage';
 
 const prompt = PromptSync({ sigint: true });
 
@@ -24,11 +23,11 @@ function replacePlaceholders(text: string, nationName: string): string {
   return text.replace(/\${nationName}/g, nationName);
 }
 
-function promptForIssue(issue: any, nationName: string): any | null {
+function promptForIssue(issue: Issue, nationName: string): { option: Option; decision: Decision } | null {
   console.log(`\n=== ${issue.name} ===`);
   console.log(replacePlaceholders(issue.description, nationName));
 
-  issue.options.forEach((option: any) => {
+  issue.options.forEach((option: Option) => {
     console.log(`\nOption ${option.id}: ${option.name}`);
     console.log(`Description: ${replacePlaceholders(option.description, nationName)}`);
   });
@@ -41,29 +40,21 @@ function promptForIssue(issue: any, nationName: string): any | null {
     return null;
   }
 
-  return issue.options.find((o: any) => o.id === choice) || null;
+  const chosenOption = issue.options.find(o => o.id === choice);
+  if (!chosenOption) return null;
+
+  const decision: Decision = {
+    issueId: issue.id,
+    issueName: issue.name,
+    chosenOptionId: chosenOption.id,
+    chosenOptionName: chosenOption.name,
+    description: replacePlaceholders(chosenOption.description, nationName)
+  };
+
+  return { option: chosenOption, decision };
 }
 
-function chooseIdeologyForPersonality(personality: Personality): Ideology {
-  const authScore = personality.attributes.authoritarianism;
-  const progScore = personality.attributes.progressiveness;
-  
-  let bestMatch = ideologies[0];
-  let smallestDiff = Number.MAX_VALUE;
-
-  for (const ideology of ideologies) {
-    const diff = Math.abs(ideology.politicalFreedom - (100 - authScore)) +
-                Math.abs(ideology.civilRights - progScore);
-    if (diff < smallestDiff) {
-      smallestDiff = diff;
-      bestMatch = ideology;
-    }
-  }
-
-  return bestMatch;
-}
-
-function findNewIdeology(stats: Nation['stats']): Ideology {
+function determineNearestIdeology(stats: Nation['stats']): Ideology {
   const currentPoint = {
     x: stats.economicFreedom,
     y: stats.civilRights,
@@ -132,13 +123,9 @@ export async function setupGame(): Promise<string> {
   console.log("Welcome to Nation Builder 2025 - Multiplayer!\n");
 
   const personalities = selectPersonalities(3);
-  console.log("\nSelected AI Leaders:");
+  console.log("\nSelected Random AI Leaders:");
   personalities.forEach((p, i) => {
     console.log(`\n${i + 1}. ${p.name} - ${p.description}`);
-    console.log("Attributes:");
-    Object.entries(p.attributes).forEach(([key, value]) => {
-      console.log(`  ${key}: ${value}`);
-    });
   });
 
   const gameId = createGame(personalities);
@@ -187,41 +174,42 @@ export async function createAINations(gameId: string): Promise<void> {
   if (!game) return;
 
   for (const personality of game.selectedPersonalities) {
-    const ideology = chooseIdeologyForPersonality(personality);
-    const nationName = `${personality.name}'s Domain`;
-    createNation(gameId, nationName, ideology, 'AI', personality);
-  }
-}
+    const initialIdeology = getRandomIdeology();
+    const aiNation = createNation(gameId, personality.nationName, initialIdeology, 'AI', personality);
 
-export function generateRandomNationName(): string {
-  const sillyPrefixes = ["United Republic of", "Democratic People's", "Glorious Empire of", "Most Serene Republic of", "Grand Duchy of"];
-  const sillySuffixes = ["topia", "land", "stan", "ville", "vania"];
-  
-  const prefix = sillyPrefixes[Math.floor(Math.random() * sillyPrefixes.length)];
-  const suffix = sillySuffixes[Math.floor(Math.random() * sillySuffixes.length)];
-  return `${prefix} Banana${suffix}`;
+    if (aiNation) {
+      const updatedNation = await playAINation(aiNation);
+      
+      const currentGame = getGame(gameId);
+      if (currentGame) {
+        const aiIndex = currentGame.aiNations.findIndex(n => n.name === personality.nationName);
+        if (aiIndex !== -1) {
+          currentGame.aiNations[aiIndex] = updatedNation;
+          storeGame(gameId, currentGame);
+        }
+      }
+    }
+  }
 }
 
 export async function playGame(nation: Nation, gameId: string) {
   console.log(`\nWelcome to ${nation.name}!\n`);
   
-  // Store initial state
-  const originalNation = { ...nation };
+  const originalNation: Nation = { ...nation };
+  let currentNation: Nation = { 
+    ...nation, 
+    decisions: [] 
+  };
   
-  let currentNation = nation;
   for (const issue of issuesData.issues) {
-    const selectedOption = promptForIssue(issue, nation.name);
-    if (selectedOption) {
-      currentNation = updateNationStats(currentNation, selectedOption.impact);
-      console.log("\nAfter this decision:");
-      displayNationStatus(currentNation);
+    const result = promptForIssue(issue, nation.name);
+    if (result) {
+      currentNation = updateNationStats(currentNation, result.option.impact);
+      currentNation.decisions.push(result.decision);
     }
   }
 
-  // Find new ideology based on final stats
-  const newIdeology = findNewIdeology(currentNation.stats);
-  
-  // Calculate aggregate changes
+  const newIdeology = determineNearestIdeology(currentNation.stats);
   const changes = calculateChanges(originalNation, currentNation);
   
   console.log("\n=== Aggregate Changes ===");
@@ -239,13 +227,11 @@ export async function playGame(nation: Nation, gameId: string) {
     console.log(`\n✨ Your nation remains a ${newIdeology.name}`);
   }
 
-  // Update nation's ideology
   currentNation = {
     ...currentNation,
     ideology: newIdeology
   };
 
-  // Store and display game info
   const game = getGame(gameId);
   if (game) {
     if (game.player1Nation?.name === nation.name) {
