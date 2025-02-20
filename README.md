@@ -231,4 +231,6 @@ Follow the on-screen prompts to create or join a game.
 * Flow TestNet - 0x18975871ab7E57e0f26fdF429592238541051Fb0
 * Verified Contract - (https://evm-testnet.flowscan.io/address/0x18975871ab7e57e0f26fdf429592238541051fb0)
 
-
+## Mantle
+* Contract - 0x14cf0cd23b5a444f1e57765d12f21ee7f1e8a2c3
+* Verified Contract - https://sepolia.mantlescan.xyz/address/0x14cf0cd23b5a444f1e57765d12f21ee7f1e8a2c3#code

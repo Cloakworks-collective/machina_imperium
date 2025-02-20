@@ -77,7 +77,6 @@ contract NationBuilder {
     }
 
     function joinGame(bytes32 gameId) external gameExists(gameId) {
-        require(games[gameId].status == GameStatus.CREATED, "Game not joinable");
         require(games[gameId].player1 != msg.sender, "Cannot join your own game");
         require(games[gameId].player2 == address(0), "Player 2 already joined");
 
