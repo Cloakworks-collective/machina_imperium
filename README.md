@@ -213,24 +213,7 @@ npm run dev
 
 Follow the on-screen prompts to create or join a game.
 
-
 ## Smart Contracts 
 ### Ethereum Sepolia 
 * Ethereum Sepolia - 0x30CCF5C0Ea4F871398136DD643A0544Aba39b26D
 * Verified Link - https://sepolia.etherscan.io/address/0x30ccf5c0ea4f871398136dd643a0544aba39b26d
-
-### Base Sepolia 
-* Base Sepolia - 0x981BeeCd15b05A35206cfc44af12373B45613E71
-* Verified Link - https://basescan.org/address/0x981BeeCd15b05A35206cfc44af12373B45613E71
-
-### Arbitrum Sepolia 
-* Arbitrum Sepolia - 0x18975871ab7E57e0f26fdF429592238541051Fb0
-* Verified Link - https://sepolia.arbiscan.io/address/0x18975871ab7e57e0f26fdf429592238541051fb0
-
-### Flow Testnet 
-* Flow TestNet - 0x18975871ab7E57e0f26fdF429592238541051Fb0
-* Verified Contract - (https://evm-testnet.flowscan.io/address/0x18975871ab7e57e0f26fdf429592238541051fb0)
-
-## Mantle
-* Contract - 0x14cf0cd23b5a444f1e57765d12f21ee7f1e8a2c3
-* Verified Contract - https://sepolia.mantlescan.xyz/address/0x14cf0cd23b5a444f1e57765d12f21ee7f1e8a2c3#code
