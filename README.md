@@ -7,7 +7,7 @@
 <!-- TOC start (generated with https://github.com/derlin/bitdowntoc) -->
 
 - [Machina Imperium](#machina-imperium)
-   * [Overeview](#overeview)
+   * [Overview](#overeview)
       + [Example Issue of the Game:  ](#example-issue-of-the-game)
    * [Game Flow](#game-flow)
    * [What does the agents do in the game? (for now)](#what-does-the-agents-do-in-the-game-for-now)
@@ -27,13 +27,10 @@
    * [Run Locally](#run-locally)
    * [Smart Contracts ](#smart-contracts)
       + [Ethereum Sepolia ](#ethereum-sepolia)
-      + [Base Sepolia ](#base-sepolia)
-      + [Arbitrum Sepolia ](#arbitrum-sepolia)
-      + [Flow Testnet ](#flow-testnet)
 
 <!-- TOC end -->
 
-## Overeview
+## Overview
 
 A multiplayer nation simulation game inspired by *NationStates*, where players create nations aligned with their political ideals and compete against AI-controlled nations led by historical personalities. Every decision shapes your nation's future, influencing alliances and economic growth. As a PvP experience, nations strive to achieve the highest GDP while forging strategic partnerships with AI-driven nations. 
   
